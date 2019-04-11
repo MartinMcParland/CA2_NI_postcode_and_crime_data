@@ -254,13 +254,19 @@ head(random_crime_sample)
 updated_random_sample <- random_crime_sample
 chart_data <- updated_random_sample
 
+# Sort
+chart_data <- chart_data[order(chart_data$Postcode, chart_data$Crime.type),]
+head(chart_data)
+
 # (h) Create a bar plot of the crime type from the chart_data data frame. Show a suitable 
 # main title for the bar chart, and suitable x and y-axis labels. Make sure all labels on 
-# the x-axis can be read. Show the bar plot in your CA document.Create a bar plot of the 
-# crime type from the chart_data data frame. Show a suitable main title for the bar chart, 
-# and suitable x and y-axis labels. Make sure all labels on the x-axis can be read. 
-# Show the bar plot in your CA document.
+# the x-axis can be read. Show the bar plot in your CA document.
 
+str(chart_data)
+
+crimes <- table(chart_data$Crime.type)
+barplot(crimes, main="Crime Types", 
+        xlab="Crimes")
 
 # (i) Save your modified CrimeDataWithLocation dataset in a csv file called FinalNICrimeData.
 

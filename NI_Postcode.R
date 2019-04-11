@@ -147,30 +147,121 @@ head(AllNICrimeData, 10)
 str(AllNICrimeData)
 
 
-# (e) Create a function called find_a_postcode that takes as an input each location
-# attribute from AllNICrimeData and finds a suitable postcode value from the
-# postcode dataset. Use the CleanNIPostcodeData dataset you created in section 1
-# as the reference data to find postcodes. If there are several postcodes discovered
-# with the same location, choose the most popular postcode for that location. Store
-# the output from the find_a_postcode function in a suitably named variable. Show
-# the structure and number of values in this variable.
+# (e) Choose 1000 random samples of crime data from the AllNICrimeData dataset where 
+# the location attribute contains location information. This means that the location 
+# information should NOT contain an NA identifier. Store this data in a data frame 
+# called random_crime_sample. Then create a function called find_a_postcode that takes 
+# as an input each location attribute from random_crime_sample and finds a suitable 
+# postcode value from the postcode dataset. Use the CleanNIPostcodeData dataset you 
+# created in section 1 as the reference data to find postcodes. If there are several 
+# postcodes discovered with the same location, choose the most popular postcode for 
+# that location. Store the output from the find_a_postcode function in a suitably 
+# named variable in your random_crime_sample data frame. Make sure there are no missing 
+# postcodes in the output from your function. Show the structure of this data frame 
+# once you’ve completed this task and count the number of records in the modified 
+# random_crime_sample data frame.
 
-# Due to the size of the data files this will take a long time to run so I will 
-# first create a data frame of just Primary_Thorfare and most common postcode.
-head(primary)
+# First replace all missing data in AllNICrimeData with NA
+AllNICrimeData[AllNICrimeData == ""] <- NA
+colSums(is.na(AllNICrimeData))
+AllNICrimeData[AllNICrimeData == "No Location"] <- NA
+colSums(is.na(AllNICrimeData))
+# Show structure and first 10 rows of data
+head(AllNICrimeData, 10)
+str(AllNICrimeData)
 
-All_postcodes <- primary[c(3, 8)]
-head(All_postcodes)
-str(All_postcodes)
-# Remove NAs
-All_postcodes <- na.omit(All_postcodes)
-str(All_postcodes)
+# Remove all rows where location attribute is NA or "No Location" 
+# and save this as remove_NA_in_location
+remove_blank_location <- na.omit(AllNICrimeData)
+colSums(is.na(remove_blank_location))
+# Show structure and first 10 rows of data
+head(remove_blank_location, 10)
 
-# Create list of Primary Thorfare with most common postcode
-MaxNIPostCode <- All_postcodes %>% group_by(All_postcodes$Primary_Thorfare) %>% 
-  summarize (Postcode =names(which.max(table(All_postcodes$Postcode))))
+# Count of rows and first 10 rows
+nrow(remove_blank_location)
+head(remove_blank_location, 10)
 
-write.csv(MaxNIPostCode, file = "MaxNIPostcode.csv")
-MaxNIPostCode
-head(MaxNIPostCode, 20)
-tail(MaxNIPostCode, 20)
+# Choose 1000 random samples of crime data from the AllNICrimeData dataset where 
+# the location attribute contains location information. This means that the location 
+# information should NOT contain an NA identifier. Store this data in a data frame 
+# called random_crime_sample.
+
+random_crime_sample <- remove_blank_location[sample(nrow(remove_blank_location), 1000), ]
+nrow(random_crime_sample)
+head(random_crime_sample)
+
+# Then create a function called find_a_postcode that takes 
+# as an input each location attribute from random_crime_sample and finds a suitable 
+# postcode value from the postcode dataset.Use the CleanNIPostcodeData dataset you 
+# created in section 1 as the reference data to find postcodes.
+CleanNIPostcodeData <- read.csv("CleanNIPostcodeData.csv", header=TRUE, stringsAsFactors = FALSE)
+nrow(CleanNIPostcodeData)
+head(CleanNIPostcodeData, 10)
+str(CleanNIPostcodeData)
+
+# Change both Primary_thorfare and Location to upper in order to compare
+random_crime_sample$Location <- toupper(random_crime_sample$Location)
+CleanNIPostcodeData$Primary_Thorfare <- toupper(CleanNIPostcodeData$Primary_Thorfare)
+head(random_crime_sample)
+head(CleanNIPostcodeData)
+
+# Create a list of Primary_Thorfare with the most common postcode
+postcode_list <- CleanNIPostcodeData[, c(4, 9)]
+head(postcode_list, 10)
+
+library(plyr)
+postcode_list <- ddply(postcode_list,.(Primary_Thorfare, Postcode),nrow)
+head(postcode_list)
+str(postcode_list)
+colnames(postcode_list) <- c("Primary_Thorfare", "Postcode", "Num_Postcode")
+postcode_list <- na.omit(postcode_list)
+# Sort
+postcode_list <- postcode_list[order(-postcode_list$Num_Postcode),]
+# Remove all except max number of postcodes
+postcode_list = postcode_list[!duplicated(postcode_list$Primary_Thorfare),]
+head(postcode_list, 20)
+nrow(postcode_list)
+
+# Add Postcode from postcode_list to ramdom_crime_sample data frame as postcode attribute
+random_crime_sample$Postcode <- NA
+head(random_crime_sample)
+
+
+
+# (f) Append the data output from your find_a_postcode function to the random_crime_sample 
+# dataset. Show the modified structure. Save the modified random crime sample data frame 
+# as random_crime_sample.csv.
+# Add Postcode to random_crime_sample using match function of Location and Primary_Thorfare
+random_crime_sample$Postcode <- postcode_list$Postcode[match(random_crime_sample$Location,
+                                                             postcode_list$Primary_Thorfare)]
+
+head(random_crime_sample)
+str(random_crime_sample)
+write.csv(random_crime_sample, file = "random_crime_sample.csv")
+
+# (g) Now we need to update the random sample so that it contains only the following items 
+# • Month 
+# • Longitude 
+# • Latitude 
+# • Location 
+# • Crime.type 
+# • Postcode 
+# Extract this data into a new data frame called updated_random_sample. Then create another 
+# data frame called chart_data using the updated_random_sample data frame. Sort the 
+# chart_data data frame by postcode where the postcode contains “BT1” and then by crime type. # 
+# Show the summary statistics for the crime type from this chart_data data frame.
+head(random_crime_sample)
+updated_random_sample <- random_crime_sample
+chart_data <- updated_random_sample
+
+# (h) Create a bar plot of the crime type from the chart_data data frame. Show a suitable 
+# main title for the bar chart, and suitable x and y-axis labels. Make sure all labels on 
+# the x-axis can be read. Show the bar plot in your CA document.Create a bar plot of the 
+# crime type from the chart_data data frame. Show a suitable main title for the bar chart, 
+# and suitable x and y-axis labels. Make sure all labels on the x-axis can be read. 
+# Show the bar plot in your CA document.
+
+
+# (i) Save your modified CrimeDataWithLocation dataset in a csv file called FinalNICrimeData.
+
+

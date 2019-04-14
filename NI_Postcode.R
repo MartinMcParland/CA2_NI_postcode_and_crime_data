@@ -171,6 +171,7 @@ colSums(is.na(AllNICrimeData))
 head(AllNICrimeData, 10)
 str(AllNICrimeData)
 
+
 # 2) Remove all rows where location attribute is blank 
 # and save this as remove_blank_location
 remove_blank_location <- na.omit(AllNICrimeData)
@@ -180,6 +181,7 @@ colSums(is.na(remove_blank_location))
 str(remove_blank_location)
 nrow(remove_blank_location)
 head(remove_blank_location, 10)
+
 
 # 3) Choose 1000 random samples of crime data from the AllNICrimeData dataset where 
 # the location attribute contains location information. This means that the location 
@@ -191,6 +193,7 @@ random_crime_sample <- remove_blank_location[sample(nrow(remove_blank_location),
 str(random_crime_sample)
 nrow(random_crime_sample)
 head(random_crime_sample, 10)
+
 
 # 4) Use the CleanNIPostcodeData dataset was created in section 1 as 
 # the reference data to find postcodes.
@@ -206,19 +209,35 @@ head(CleanNIPostcodeData, 10)
 # rows of each dataframe
 random_crime_sample$Location <- toupper(random_crime_sample$Location)
 CleanNIPostcodeData$Primary_Thorfare <- toupper(CleanNIPostcodeData$Primary_Thorfare)
-head(random_crime_sample, 10)
+
+# Show structure count of rows and first 10 rows of data
+str(CleanNIPostcodeData)
+nrow(CleanNIPostcodeData)
 head(CleanNIPostcodeData, 10)
+
+# Show structure count of rows and first 10 rows of data
+str(random_crime_sample)
+nrow(random_crime_sample)
+head(random_crime_sample, 10)
+
 
 # 6) Create a list of Primary_Thorfare and postcode
 postcode_list <- CleanNIPostcodeData[, c(4, 9)]
+
+# Show structure count of rows and first 10 rows of data
+str(postcode_list)
+nrow(postcode_list)
 head(postcode_list, 10)
+
 
 # 7) Create function to count the number of occurrences of a postcode for each
 # Primary_Thorfare
 library(plyr)
 postcode_list <- ddply(postcode_list,.(Primary_Thorfare, Postcode),nrow)
-head(postcode_list)
+
+# Show structure 
 str(postcode_list)
+
 # Assign column names
 colnames(postcode_list) <- c("Primary_Thorfare", "Postcode", "Num_Postcode")
 postcode_list <- na.omit(postcode_list)
@@ -232,7 +251,7 @@ str(postcode_list)
 nrow(postcode_list)
 head(postcode_list, 10)
 
-# Add Postcode attribute with NA values to ramdom_crime_sample data frame 
+# 8) Add Postcode attribute with NA values to ramdom_crime_sample data frame 
 # to hold the postcode generated as most common based on Primary_Thorfare
 random_crime_sample$Postcode <- NA
 
@@ -265,16 +284,16 @@ write.csv(random_crime_sample, file = "random_crime_sample.csv")
 # • Postcode 
 # Extract this data into a new data frame called updated_random_sample. Then create another 
 # data frame called chart_data using the updated_random_sample data frame. 
-head(random_crime_sample)
+str(random_crime_sample)
+head(random_crime_sample, 10)
 updated_random_sample <- random_crime_sample
 chart_data <- updated_random_sample
 
 # Sort the chart_data data frame by postcode where the postcode contains “BT1” and then by crime type. 
-# Show the summary statistics for the crime type from this chart_data data frame.
 chart_data <- dplyr::filter(chart_data, grepl("BT1", Postcode))
 chart_data <- chart_data[order(chart_data$Postcode, chart_data$Crime.type),]
-head(chart_data)
-summary(chart_data)
+# Show the summary statistics for the crime type from this chart_data data frame.
+summary(chart_data$Crime.type)
 
 # Show structure count of rows and first 10 rows of data
 str(chart_data)
